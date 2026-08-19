@@ -1,0 +1,3 @@
+import type { ReactNode } from "react";
+export function ResearchSection({title,description,children}:{title:string;description?:string;children:ReactNode}){return <section className="border-t border-[#e8e5de] py-8"><h2 className="text-lg font-semibold text-[#292824]">{title}</h2>{description?<p className="mt-1 text-sm text-[#858078]">{description}</p>:null}<div className="mt-4 text-[15px] leading-7 text-[#4b4944]">{children}</div></section>}
+export function EmptyResearch({children}:{children:ReactNode}){return <div className="rounded-lg border border-dashed border-[#dcd8d0] bg-[#faf9f7] px-4 py-3 text-sm text-[#817d75]">{children}</div>}
