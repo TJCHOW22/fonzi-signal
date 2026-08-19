@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { sendInteraction } from "./feed-api";
 import type { FeedAction, FeedItem, FeedProfile } from "./types";
 
@@ -19,13 +20,14 @@ function Icon({name}:{name:"save"|"comment"|"thread"|"skip"|"angle"}) {
 }
 
 export function FeedCard({item,profile,sessionId,onSkip,compact=false}:{item:FeedItem;profile:FeedProfile;sessionId:string|null;onSkip:(id:string)=>void;compact?:boolean}) {
- const [expanded,setExpanded]=useState(false),[commenting,setCommenting]=useState(false),[comment,setComment]=useState(""),[dismissing,setDismissing]=useState(false),[dismissReason,setDismissReason]=useState(""),[dismissNote,setDismissNote]=useState(""),[notice,setNotice]=useState<string|null>(null),[pending,setPending]=useState<FeedAction|null>(null),[saved,setSaved]=useState(false);
+ const router=useRouter();
+ const [expanded,setExpanded]=useState(false),[commenting,setCommenting]=useState(false),[comment,setComment]=useState(""),[dismissing,setDismissing]=useState(false),[dismissReason,setDismissReason]=useState(""),[dismissNote,setDismissNote]=useState(""),[notice,setNotice]=useState<string|null>(null),[pending,setPending]=useState<FeedAction|null>(null),[saved,setSaved]=useState(false),[avatarFailed,setAvatarFailed]=useState(false);
  const metrics=useMemo(()=>[["reply",item.metrics.replies],["repost",item.metrics.reposts],["like",item.metrics.likes],["view",item.metrics.views]].filter((entry)=>entry[1]!==undefined),[item.metrics]);
- async function act(action:FeedAction,body?:string,metadata?:Record<string,string>){if(action==="open_thread"&&item.url)window.open(item.url,"_blank","noopener,noreferrer");setPending(action);setNotice(null);try{const suggestion=await sendInteraction({profileId:profile,targetId:item.postId,action,sessionId,comment:body,metadata});if(action==="save")setSaved(true);if(action==="skip")onSkip(item.id);if(suggestion)setNotice(suggestion);else if(action==="create_angle")setNotice("sent to the Angle Feed");else if(action==="comment")setNotice("comment saved");}catch{setNotice("could not save that action. try again.");}finally{setPending(null);}}
+ async function act(action:FeedAction,body?:string,metadata?:Record<string,string>){if(action==="open_thread"&&item.url)window.open(item.url,"_blank","noopener,noreferrer");setPending(action);setNotice(null);try{const result=await sendInteraction({profileId:profile,targetId:item.postId,action,sessionId,comment:body,metadata});if(action==="save")setSaved(true);if(action==="skip")onSkip(item.id);if(action==="create_angle"&&result.itemId){router.push(`/ideas/${result.itemId}`);return;}if(result.suggestedNextMove)setNotice(result.suggestedNextMove);else if(action==="create_angle")setNotice("idea created, but its workspace could not be opened");else if(action==="comment")setNotice("comment saved");}catch{setNotice("could not save that action. try again.");}finally{setPending(null);}}
  function submit(event:FormEvent){event.preventDefault();const value=comment.trim();if(!value)return;void act("comment",value);setComment("");setCommenting(false);}
  function submitDismiss(event:FormEvent){event.preventDefault();const metadata:Record<string,string>={};if(dismissReason)metadata.reason=dismissReason;if(dismissNote.trim())metadata.note=dismissNote.trim();void act("skip",undefined,metadata);}
  return <article className={`signal-card ${compact?"is-compact":""}`}>
-   <header className="signal-card-head"><span className="signal-avatar">{item.author.slice(0,2).toUpperCase()}</span><div><strong>{item.author}</strong><span>{item.handle?`@${item.handle.replace(/^@/,"")}`:""}{item.postedAt?` · ${time(item.postedAt)}`:""}</span></div>{item.url&&<a className="signal-x-link" href={item.url} target="_blank" rel="noreferrer" aria-label="Open source post">↗</a>}</header>
+   <header className="signal-card-head"><span className="signal-avatar">{item.avatarUrl&&!avatarFailed?<img src={item.avatarUrl} alt="" loading="lazy" referrerPolicy="no-referrer" onError={()=>setAvatarFailed(true)}/>:item.author.slice(0,2).toUpperCase()}</span><div><strong>{item.author}</strong><span>{item.handle?`@${item.handle.replace(/^@/,"")}`:""}{item.postedAt?` · ${time(item.postedAt)}`:""}</span></div>{item.url&&<a className="signal-x-link" href={item.url} target="_blank" rel="noreferrer" aria-label="Open source post">↗</a>}</header>
    <p className="signal-post-text">{item.text||"source post"}</p>
    {item.mediaUrl&&<img className="signal-media" src={item.mediaUrl.startsWith("/")||item.mediaUrl.startsWith("http")?item.mediaUrl:`/api/media/${item.mediaUrl}`} alt="" loading="lazy"/>}
    {metrics.length>0&&<div className="signal-metrics">{metrics.map(([label,value])=><span key={String(label)}>{fmt(value as number)} {label}</span>)}</div>}

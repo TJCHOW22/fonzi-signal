@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb, getItem, getItemSections, getItemSources, ITEM_SECTION_DEFINITIONS, ITEM_STAGES, type Post } from "@/lib/db";
 import { updateIdea, updateSection } from "../actions";
-import { relevantTakes, runConcepts, runInterview, saveInterviewAnswers } from "@/app/items/actions";
+import { generateShortFormScript, relevantTakes, runConcepts, runDeepResearch, runInterview, saveInterviewAnswers } from "@/app/items/actions";
 import { PendingButton } from "@/components/pending-button";
 import { SourceReader } from "@/components/ideas/source-reader";
 
@@ -91,6 +91,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
       : !item.angle?.trim()
         ? { href: "#angle", label: "Set the angle" }
         : { href: "#drafts", label: hasDraft ? "Refine the drafts" : "Generate concepts" };
+  const speakerLabel = selectedSpeaker ?? "the speaker";
 
   return <main className="mx-auto max-w-4xl px-4 py-8 text-[#262522] sm:px-6 sm:py-10">
     <div className="flex items-center justify-between gap-4"><Link href="/ideas" className="text-sm text-[#817e77] hover:text-[#262522]">← Ideas</Link><span className="rounded-full bg-[#f2f0eb] px-3 py-1 text-xs text-[#6f6b64]">{stageLabel(normalizedStage)}</span></div>
@@ -124,7 +125,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
       <button className="mt-3 rounded-full border border-[#d7d3ca] bg-white px-4 py-2 text-sm font-medium hover:bg-[#f7f6f3]">Save idea setup</button>
     </form>
 
-    <section className="mt-12"><p className="text-xs font-medium uppercase tracking-[.14em] text-[#99958d]">1 · Read</p><h2 className="mt-2 text-xl font-semibold">Understand the inspiration first</h2><p className="mt-1 text-sm text-[#7c7972]">Read or watch the complete source before deciding what Fonzi should say.</p>
+    <section className="mt-12"><p className="text-xs font-medium uppercase tracking-[.14em] text-[#99958d]">1 · Read</p><h2 className="mt-2 text-xl font-semibold">Understand the inspiration first</h2><p className="mt-1 text-sm text-[#7c7972]">Read or watch the complete source before deciding what {speakerLabel} should say.</p>
       <div className="mt-5 space-y-4">{sources.map(source => <SourceReader key={source.id} url={source.url} title={source.source_title ?? source.url ?? "Attached source"} text={source.source_text} />)}</div>
     </section>
 
@@ -166,27 +167,36 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
     </section>
 
     <section id="research" className="mt-12 scroll-mt-6 rounded-2xl bg-[#f7f6f3] p-5 sm:p-7">
-      <p className="text-xs font-medium uppercase tracking-[.14em] text-[#99958d]">3 · Think</p><h2 className="mt-2 text-xl font-semibold">Develop our point of view</h2><p className="mt-1 text-sm text-[#7c7972]">Capture your reaction before asking the system to generate concepts.</p>
+      <p className="text-xs font-medium uppercase tracking-[.14em] text-[#99958d]">3 · Think</p><h2 className="mt-2 text-xl font-semibold">Brain dump first</h2><p className="mt-1 text-sm text-[#7c7972]">Drop rough reactions, half-formed opinions, quotes, and rabbit holes here. This becomes the human context behind the script.</p>
+      <form action={updateSection} className="mt-5 rounded-xl border border-[#d9d5cc] bg-white p-4 shadow-[0_1px_2px_rgba(38,37,34,0.03)]">
+        <input type="hidden" name="id" value={id} /><input type="hidden" name="section" value="raw_material" />
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-sm font-semibold">Open canvas</h3><p className="mt-1 text-xs text-[#8a8780]">No format needed. Write what you think, what feels off, and what you want to chase.</p></div><button className="rounded-md bg-[#262522] px-4 py-2 text-xs font-medium text-white">Save brain dump</button></div>
+        <textarea name="content" defaultValue={sections.raw_material ?? ""} rows={12} placeholder="Start anywhere…" className="mt-4 w-full resize-y border-0 bg-transparent text-sm leading-7 outline-none placeholder:text-[#bbb8b1]" />
+      </form>
+      <div className="mt-7 flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-base font-semibold">Structure the useful parts</h3><p className="mt-1 text-xs text-[#8a8780]">Pull out the claim, disagreement, evidence, and real {speakerLabel} take.</p></div><form action={runDeepResearch}><input type="hidden" name="item_id" value={id} /><PendingButton pendingLabel="researching… (up to 2 min)" className="rounded-md border border-[#cfcac0] bg-white px-4 py-2 text-xs font-medium hover:bg-[#faf9f7]">Research this idea</PendingButton></form></div>
       <div className="mt-5 space-y-4">{ITEM_SECTION_DEFINITIONS.filter(def => ["source_notes", "agree_disagree", "evidence_questions", "founder_takes"].includes(def.key)).map(def => <form action={updateSection} key={def.key} className="rounded-xl border border-[#e3e0d9] bg-white p-4">
         <input type="hidden" name="id" value={id} /><input type="hidden" name="section" value={def.key} /><div className="flex justify-between gap-4"><div><h3 className="text-sm font-semibold">{def.label}</h3><p className="mt-1 text-xs text-[#8a8780]">{def.hint}</p></div><button className="h-fit rounded-md border border-[#dedbd4] px-3 py-1.5 text-xs">Save</button></div><textarea name="content" defaultValue={sections[def.key] ?? ""} rows={5} placeholder="Write what you actually think…" className="mt-3 w-full resize-y border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-[#bbb8b1]" />
       </form>)}</div>
+      <form action={updateSection} className="mt-4 rounded-xl border border-[#d6d2c9] bg-[#fbfaf8] p-4">
+        <input type="hidden" name="id" value={id} /><input type="hidden" name="section" value="research_dossier" /><div className="flex items-start justify-between gap-4"><div><h3 className="text-sm font-semibold">Research dossier</h3><p className="mt-1 text-xs text-[#8a8780]">Generated evidence, counterpoints, open questions, and story paths. Keep only what survives review.</p></div><button className="rounded-md border border-[#d7d3ca] bg-white px-3 py-1.5 text-xs">Save edits</button></div><textarea name="content" defaultValue={sections.research_dossier ?? ""} rows={12} placeholder="Research results will land here…" className="mt-3 w-full resize-y border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-[#bbb8b1]" />
+      </form>
     </section>
 
     <form id="angle" action={updateIdea} className="mt-12 scroll-mt-6 rounded-2xl border border-[#dcd8cf] p-5 sm:p-7"><input type="hidden" name="id" value={id} /><input type="hidden" name="title" value={item.title} /><input type="hidden" name="stage" value={normalizedStage} /><input type="hidden" name="person" value={selectedSpeaker ?? ""} /><input type="hidden" name="owner" value={item.owner ?? ""} /><input type="hidden" name="lane" value={item.lane ?? ""} /><input type="hidden" name="format" value={item.format ?? ""} /><input type="hidden" name="target_platform" value={item.target_platform ?? ""} />
-      <p className="text-xs font-medium uppercase tracking-[.14em] text-[#99958d]">4 · Angle</p><h2 className="mt-2 text-xl font-semibold">What can Fonzi uniquely say?</h2><p className="mt-1 text-sm text-[#7c7972]">The angle should connect a founder belief, product truth, experience, or verified fact to the source—not merely summarize it.</p>
+      <p className="text-xs font-medium uppercase tracking-[.14em] text-[#99958d]">4 · Angle</p><h2 className="mt-2 text-xl font-semibold">What can {speakerLabel} uniquely say?</h2><p className="mt-1 text-sm text-[#7c7972]">The angle should connect a real belief, experience, or verified fact to the source, not merely summarize it.</p>
       <textarea name="angle" defaultValue={item.angle ?? ""} rows={5} placeholder="Our claim, why we believe it, and what changes for the audience…" className="mt-5 w-full resize-y rounded-lg border border-[#e3e0d9] px-3 py-2.5 text-sm outline-none focus:border-[#aaa69d]" /><label className="mt-4 block text-xs font-medium uppercase tracking-[.12em] text-[#8a8780]">Working notes</label><textarea name="notes" defaultValue={item.notes ?? ""} rows={3} placeholder="Constraints, next move, people or sources to consult…" className="mt-2 w-full resize-y rounded-lg border border-[#e3e0d9] px-3 py-2.5 text-sm outline-none focus:border-[#aaa69d]" /><button className="mt-3 rounded-md bg-[#262522] px-4 py-2 text-sm text-white">Save angle</button>
     </form>
 
     <section id="interview" className="mt-12 scroll-mt-6 rounded-xl border border-[#e6e3dc] bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">Interview me</h2>
-          <p className="mt-1 text-xs text-[#8a8780]">Five pointed questions built from this item&apos;s material — your answers become the raw take.</p>
+          <h2 className="text-base font-semibold">Develop the {speakerLabel} take</h2>
+          <p className="mt-1 text-xs text-[#8a8780]">Five pointed questions built from this item&apos;s material. Answer them yourself or use them in a real conversation with {speakerLabel}.</p>
         </div>
         <form action={runInterview}>
           <input type="hidden" name="item_id" value={id} />
           <PendingButton pendingLabel="writing questions… (up to 2 min)" className="rounded-md bg-[#262522] px-4 py-2 text-sm text-white">
-            {interviewMd ? "Redo questions" : "Interview me"}
+            {interviewMd ? "Redo questions" : "Write questions"}
           </PendingButton>
         </form>
       </div>
@@ -204,8 +214,8 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
     <section id="drafts" className="mt-5 scroll-mt-6 rounded-xl border border-[#e6e3dc] bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">Generate concepts</h2>
-          <p className="mt-1 text-xs text-[#8a8780]">3-5 directions grounded only in this item&apos;s material and takes — pattern remix, winner marked. Lands in the Concepts section below.</p>
+          <h2 className="text-base font-semibold">Generate {speakerLabel} concepts</h2>
+          <p className="mt-1 text-xs text-[#8a8780]">3-5 directions grounded only in this item&apos;s source, brain dump, research, and approved takes. The strongest direction is marked.</p>
         </div>
         <form action={runConcepts}>
           <input type="hidden" name="item_id" value={id} />
@@ -216,10 +226,20 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
       </div>
     </section>
 
-    <section className="mt-12 space-y-5">{ITEM_SECTION_DEFINITIONS.filter(def => !["source_notes", "agree_disagree", "evidence_questions", "founder_takes"].includes(def.key)).map(def => <form action={updateSection} key={def.key} className="rounded-xl border border-[#e6e3dc] bg-white p-5">
+    <section className="mt-5 rounded-xl border border-[#282724] bg-[#282724] p-5 text-white sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-medium uppercase tracking-[.14em] text-[#aaa69e]">5 · Script</p><h2 className="mt-2 text-lg font-semibold">Turn the winner into a short-form script</h2><p className="mt-1 max-w-xl text-xs leading-5 text-[#bdb9b0]">Uses the source, your notes, research, interview answers, and concepts. Nothing is approved until you edit and save the final script below.</p></div><form action={generateShortFormScript}><input type="hidden" name="item_id" value={id} /><PendingButton pendingLabel="writing script… (up to 2 min)" className="rounded-md bg-white px-4 py-2 text-sm font-medium text-[#262522]">Generate short-form script</PendingButton></form></div>
+    </section>
+
+    <form action={updateSection} className="mt-5 rounded-xl border border-[#d8d4cb] bg-white p-5 shadow-[0_1px_2px_rgba(38,37,34,0.04)]">
+      <input type="hidden" name="id" value={id} /><input type="hidden" name="section" value="final_script" />
+      <div className="flex items-start justify-between gap-4"><div><h2 className="text-base font-semibold">Final script</h2><p className="mt-1 text-xs text-[#8a8780]">Edit the generated draft here. Save only the version you would actually put in front of {speakerLabel}.</p></div><button className="rounded-md bg-[#262522] px-4 py-2 text-xs font-medium text-white">Save script</button></div>
+      <textarea name="content" defaultValue={sections.final_script ?? ""} rows={18} placeholder="Your record-ready script will land here…" className="mt-4 w-full resize-y border-0 bg-transparent text-sm leading-7 outline-none placeholder:text-[#bbb8b1]" />
+    </form>
+
+    <section className="mt-12 space-y-5">{ITEM_SECTION_DEFINITIONS.filter(def => !["source_notes", "agree_disagree", "evidence_questions", "founder_takes", "raw_material", "final_script"].includes(def.key)).map(def => <form action={updateSection} key={def.key} className="rounded-xl border border-[#e6e3dc] bg-white p-5">
       <input type="hidden" name="id" value={id} /><input type="hidden" name="section" value={def.key} />
       <div className="flex items-start justify-between gap-4"><div><h2 className="text-base font-semibold">{def.label}</h2><p className="mt-1 text-xs text-[#8a8780]">{def.hint}</p></div><button className="rounded-md border border-[#dedbd4] px-3 py-1.5 text-xs hover:bg-[#f7f6f3]">Save</button></div>
-      <textarea name="content" defaultValue={sections[def.key] ?? ""} rows={def.key === "final_script" || def.key === "raw_material" ? 12 : 7} placeholder="Start writing…" className="mt-4 w-full resize-y border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-[#bbb8b1]" />
+      <textarea name="content" defaultValue={sections[def.key] ?? ""} rows={7} placeholder="Start writing…" className="mt-4 w-full resize-y border-0 bg-transparent text-sm leading-6 outline-none placeholder:text-[#bbb8b1]" />
     </form>)}</section>
   </main>;
 }
