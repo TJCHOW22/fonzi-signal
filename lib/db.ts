@@ -7,8 +7,10 @@ import path from "node:path";
 // applied idempotently on every open. CREATE statements are IF NOT EXISTS;
 // ALTER TABLE ADD COLUMN has no IF NOT EXISTS in sqlite, so applySchema()
 // checks PRAGMA table_info before each ALTER instead of exec-ing the file raw.
-const DB_PATH =
-  process.env.SIGNAL_DB_PATH ?? path.join(process.cwd(), "data", "signal.db");
+const IS_VERCEL = Boolean(process.env.VERCEL);
+const DB_PATH = process.env.SIGNAL_DB_PATH ?? (IS_VERCEL
+  ? path.join("/tmp", "fonzi-signal", "signal.db")
+  : path.join(process.cwd(), "data", "signal.db"));
 
 let db: Database.Database | null = null;
 
@@ -34,6 +36,9 @@ export function applySchema(database: Database.Database, schema: string) {
 export function getDb(): Database.Database {
   if (db) return db;
   fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+  if (IS_VERCEL && !fs.existsSync(DB_PATH)) {
+    fs.copyFileSync(path.join(process.cwd(), "seed", "signal.db"), DB_PATH);
+  }
   db = new Database(DB_PATH);
   const schema = fs.readFileSync(path.join(process.cwd(), "schema.sql"), "utf8");
   applySchema(db, schema);
