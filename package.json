@@ -14,15 +14,11 @@
     "analyze:gather:enqueue": "node scripts/enqueue-gather-analysis.mjs",
     "feed:seed:thomas": "node --experimental-strip-types scripts/seed-thomas-feed.mjs",
     "feed:learn": "node scripts/learn-feed.mjs",
-    "test:feed": "node --experimental-strip-types --test tests/feed/*.test.mjs"
+    "test:feed": "node --experimental-strip-types --test tests/feed/*.test.mjs",
+    "test:media-drafts": "node --experimental-strip-types --test tests/media-drafts/repository.test.mjs lib/media-drafts/codex-client.test.ts lib/media-drafts/single-call-generator.test.ts",
+    "test:media-drafts:live": "RUN_OPENAI_DRAFT_LIVE=1 node --experimental-strip-types --test lib/media-drafts/codex-client.integration.test.ts"
   },
   "dependencies": {
-    "@tiptap/extension-placeholder": "3.30.1",
-    "@tiptap/extension-table": "3.30.1",
-    "@tiptap/markdown": "3.30.1",
-    "@tiptap/pm": "3.30.1",
-    "@tiptap/react": "3.30.1",
-    "@tiptap/starter-kit": "3.30.1",
     "better-sqlite3": "^13.0.3",
     "next": "16.3.1",
     "react": "19.2.8",

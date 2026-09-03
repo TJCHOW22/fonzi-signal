@@ -1,105 +1,55 @@
 ---
 name: creative-principles
-description: Creative decision rules for Fonzi content.
+description: Rules for turning a source into clear, native short-form content.
 type: context
-use_when: Developing an idea, format, hook, script, visual, or repurposed asset.
-owns: Originality, reference use, format translation, and human creative control.
+use_when: Adapting Media into a script or thumbnail.
+owns: Story selection, adaptation, clarity, and platform fit.
 sources:
-  - Approved references and teardowns
-  - Knowledge/Fonzi - Scripts.md
+  - App-local creative rules in this file
 related:
   - ../audience/fonzi-icp.md
   - ../proof/fonzi-proof-rules.md
   - ../voice/fonzi-voice-system.md
-  - ../workflow/content-operating-loop.md
 ---
 
-# Fonzi creative principles
+# Creative principles
 
 ## Instructions to the system
 
-Load this file when turning a grounded idea into a creative approach.
-
-Return:
-
-1. Core idea
-2. Audience tension
-3. Useful pattern from each reference
-4. Fonzi-specific evidence or point of view
-5. Three meaningfully different approaches
-6. The human decision still required
-
-Do not generate a polished asset until the idea, audience, and proof are known.
+Choose the smallest accurate story that passes the one-listen test.
 
 ## Purpose
 
-Use this context to protect originality and human taste while letting the system remove production friction.
+Turn a source into a clear, native short-form explanation.
 
-## The rule
+## Outcome
 
-Borrow constraints, not content.
+After one listen, a viewer should be able to explain:
 
-A useful reference can teach us:
+1. the problem
+2. what changed or was built
+3. how it works in plain language
+4. why it matters
 
-- hook shape
-- pacing
-- information order
-- visual grammar
-- shot rhythm
-- tension
-- format
-- platform behavior
+If they cannot, the script is not ready.
 
-It cannot give us permission to copy:
+## Source adaptation
 
-- wording
-- claims
-- jokes
-- personal stories
-- beat-by-beat structure
-- signature visuals
+- Preserve the source thesis, mechanism, causal order, and viewer payoff.
+- Select the smallest coherent story, normally 6 to 10 beats. Do not compress every verified fact into the script.
+- Prefer the source's clearest example, contrast, or analogy over extra names, dates, and numbers.
+- One factual claim per sentence. Define a necessary technical term immediately in ordinary language.
+- If the whole source cannot fit in 60 to 80 seconds, explain one mechanism well instead of summarizing everything badly.
+- Generate three meaningfully different explanation approaches privately. Choose the one that is easiest to understand, then verify it.
 
-## Pattern remix
+## Thumbnail
 
-1. Name what makes the reference work.
-2. Separate universal principles from platform conventions.
-3. Choose only the constraints relevant to the Fonzi idea.
-4. Rebuild from Fonzi's audience, evidence, voice, and point of view.
-5. Compare the result with the source and remove recognizable imitation.
-
-## Creative control
-
-AI may generate options, organize references, critique drafts, and handle repetitive variations.
-
-Humans choose:
-
-- the idea worth expressing
-- the opinion
-- the story
-- the emotional register
-- the final visual direction
-- the version that ships
-
-## Creative prompt
-
-> Analyze this reference as a set of creative constraints. Identify the hook shape, structure, pacing, format, visual grammar, and audience mechanism. Do not reuse its language or beat sequence. Apply only the useful constraints to a Fonzi idea grounded in approved audience, proof, and voice context. Generate three distinct approaches and explain the tradeoff of each.
+The thumbnail hook is separate from the spoken hook. Match the readable source character count when useful, keep the hierarchy, and never copy logos, watermarks, or signature visuals. Save only the winner.
 
 ## Quality check
 
-- Is there one clear idea?
-- Is the work useful at the object level?
-- Does it feel native to the platform?
-- Is the source influence abstract rather than recognizable?
-- Does Fonzi's evidence and point of view drive the piece?
-- Did a human make the final creative choice?
+The viewer can restate the problem, mechanism, and payoff without knowing the company first.
 
 ## Retrieval and conflict rules
 
-- This file owns how references are transformed, not what Fonzi believes.
-- Retrieve audience context from ../audience/fonzi-icp.md.
-- Retrieve factual support from ../proof/fonzi-proof-rules.md.
-- Retrieve wording and speaker constraints from ../voice/fonzi-voice-system.md.
-- Retrieve detailed script mechanics from Knowledge/Fonzi - Scripts.md.
-- A high-performing reference does not outrank Fonzi's audience, facts, or voice.
-- If a reference conflicts with the brand, keep the abstract mechanism and discard the expression.
-- Record useful learned patterns separately from source wording.
+This file owns adaptation and clarity. Proof rules own factual eligibility, and voice rules own expression.

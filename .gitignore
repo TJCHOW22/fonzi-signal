@@ -42,3 +42,9 @@ next-env.d.ts
 
 # local sqlite store — never committed
 /data/
+/signal.db
+*.db-shm
+*.db-wal
+
+# local source-media cache — never committed
+/public/media/

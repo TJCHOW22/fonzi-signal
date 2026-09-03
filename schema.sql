@@ -360,3 +360,161 @@ CREATE INDEX IF NOT EXISTS idx_feed_session_items_page ON feed_session_items(ses
 CREATE INDEX IF NOT EXISTS idx_feed_interactions_learning ON feed_interactions(profile_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_feed_comments_profile ON feed_comments(profile_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_feed_post_profiles_profile ON feed_post_profiles(profile_id, post_id);
+
+-- ------------------------------------------------------------------------
+-- Media -> Drafts writing room (2026-08-26). media_items are permanent
+-- source records. A source leaves the active Media grid when a linked draft
+-- exists, but the source row is never deleted and remains available in the
+-- side-by-side draft workspace.
+CREATE TABLE IF NOT EXISTS media_items (
+  id              TEXT PRIMARY KEY,
+  title           TEXT NOT NULL,
+  creator         TEXT NOT NULL,
+  source_account  TEXT NOT NULL,
+  source_platform TEXT NOT NULL,
+  posted_at       TEXT,
+  duration        TEXT,
+  thumbnail_url   TEXT NOT NULL,
+  video_url       TEXT NOT NULL,
+  source_url      TEXT NOT NULL,
+  thumbnail_text  TEXT,
+  transcript      TEXT NOT NULL,
+  caption         TEXT,
+  summary         TEXT,
+  likes           TEXT,
+  comments        TEXT,
+  reposts         TEXT,
+  created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE media_items ADD COLUMN posted_at TEXT;
+ALTER TABLE media_items ADD COLUMN killed_at TEXT;
+
+-- One draft per source and workflow. The unique pair makes Create safe to
+-- retry and protects against duplicate requests at the database boundary.
+CREATE TABLE IF NOT EXISTS drafts (
+  id                      INTEGER PRIMARY KEY,
+  source_media_id         TEXT NOT NULL REFERENCES media_items(id),
+  workflow_key            TEXT NOT NULL,
+  speaker                 TEXT NOT NULL,
+  source_platform         TEXT NOT NULL,
+  publishing_account      TEXT NOT NULL,
+  publishing_platform     TEXT NOT NULL,
+  generation_status       TEXT NOT NULL DEFAULT 'generating',
+  production_stage        TEXT NOT NULL DEFAULT 'drafting'
+    CHECK (production_stage IN ('drafting', 'ready_to_record', 'editing', 'ready_to_publish')),
+  thumbnail_hook          TEXT,
+  generated_thumbnail_url TEXT,
+  script_hook             TEXT,
+  script_body             TEXT,
+  cta                     TEXT,
+  created_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at            TEXT,
+  UNIQUE (source_media_id, workflow_key)
+);
+
+-- Completion history remains visible after read. One completion notification
+-- per draft keeps repeated generation requests idempotent.
+CREATE TABLE IF NOT EXISTS draft_notifications (
+  id           INTEGER PRIMARY KEY,
+  draft_id     INTEGER NOT NULL UNIQUE REFERENCES drafts(id),
+  event_status TEXT NOT NULL DEFAULT 'ready',
+  created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at      TEXT
+);
+
+-- One durable Codex conversation per draft. A provisioning row reserves the
+-- only slot before the SDK starts a local thread, so concurrent retries cannot
+-- bind two thread IDs to the same draft. Claim metadata is server-only.
+CREATE TABLE IF NOT EXISTS draft_codex_threads (
+  draft_id         INTEGER PRIMARY KEY REFERENCES drafts(id),
+  thread_id        TEXT UNIQUE,
+  model            TEXT,
+  state            TEXT NOT NULL DEFAULT 'provisioning'
+    CHECK (state IN ('provisioning', 'ready', 'failed')),
+  claim_token      TEXT,
+  claimed_at       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  claim_expires_at TEXT,
+  ready_at         TEXT,
+  failed_at        TEXT,
+  error            TEXT,
+  created_at       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Every generation attempt is durable and reports the real pipeline stage.
+-- The partial unique index below prevents more than one live attempt for the
+-- same draft while retaining completed attempts as history.
+CREATE TABLE IF NOT EXISTS draft_generation_runs (
+  id           INTEGER PRIMARY KEY,
+  draft_id     INTEGER NOT NULL REFERENCES drafts(id),
+  stage        TEXT NOT NULL DEFAULT 'preparing_source'
+    CHECK (stage IN ('preparing_source', 'writing', 'verifying_facts', 'checking_voice', 'ready', 'failed')),
+  pass_number  INTEGER NOT NULL DEFAULT 1 CHECK (pass_number >= 1),
+  model        TEXT,
+  prompt_version TEXT,
+  prompt_hash  TEXT,
+  error        TEXT,
+  started_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at TEXT
+);
+
+-- Immutable snapshots written as the verified pipeline changes a draft.
+-- Candidate scores and private ranking notes never enter this table.
+CREATE TABLE IF NOT EXISTS draft_revisions (
+  id                      INTEGER PRIMARY KEY,
+  draft_id                INTEGER NOT NULL REFERENCES drafts(id),
+  generation_run_id       INTEGER NOT NULL REFERENCES draft_generation_runs(id),
+  pass_number             INTEGER NOT NULL DEFAULT 1 CHECK (pass_number >= 1),
+  event_key               TEXT,
+  kind                    TEXT NOT NULL,
+  summary                 TEXT NOT NULL,
+  source_urls             TEXT NOT NULL DEFAULT '[]',
+  thumbnail_hook          TEXT,
+  generated_thumbnail_url TEXT,
+  script_hook             TEXT,
+  script_body             TEXT,
+  cta                     TEXT,
+  created_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Internal structured findings emitted by research and reviewer stages.
+-- payload_json stores concise evidence and decisions, never chain-of-thought.
+CREATE TABLE IF NOT EXISTS draft_generation_artifacts (
+  id                INTEGER PRIMARY KEY,
+  draft_id          INTEGER NOT NULL REFERENCES drafts(id),
+  generation_run_id INTEGER NOT NULL REFERENCES draft_generation_runs(id),
+  pass_number       INTEGER NOT NULL CHECK (pass_number >= 1),
+  stage             TEXT NOT NULL
+    CHECK (stage IN ('preparing_source', 'writing', 'verifying_facts', 'checking_voice', 'ready', 'failed')),
+  kind              TEXT NOT NULL,
+  payload_json      TEXT NOT NULL,
+  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (generation_run_id, pass_number, stage, kind)
+);
+
+-- Existing databases gain the replay key without rebuilding revision history.
+ALTER TABLE draft_revisions ADD COLUMN event_key TEXT;
+ALTER TABLE drafts ADD COLUMN production_stage TEXT NOT NULL DEFAULT 'drafting';
+ALTER TABLE draft_generation_runs ADD COLUMN model TEXT;
+ALTER TABLE draft_generation_runs ADD COLUMN prompt_version TEXT;
+ALTER TABLE draft_generation_runs ADD COLUMN prompt_hash TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_drafts_source ON drafts(source_media_id);
+CREATE INDEX IF NOT EXISTS idx_drafts_status ON drafts(generation_status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_drafts_production_stage ON drafts(production_stage, updated_at);
+CREATE INDEX IF NOT EXISTS idx_draft_notifications_created ON draft_notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_draft_generation_runs_draft ON draft_generation_runs(draft_id, id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_generation_runs_one_active
+  ON draft_generation_runs(draft_id)
+  WHERE stage IN ('preparing_source', 'writing', 'verifying_facts', 'checking_voice');
+CREATE INDEX IF NOT EXISTS idx_draft_revisions_history ON draft_revisions(draft_id, created_at, id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_revisions_event
+  ON draft_revisions(generation_run_id, event_key)
+  WHERE event_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_draft_artifacts_run
+  ON draft_generation_artifacts(generation_run_id, pass_number, id);
+PRAGMA optimize;

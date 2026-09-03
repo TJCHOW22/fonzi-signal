@@ -1,0 +1,651 @@
+.root {
+  --control-ink: #171715;
+  --control-muted: #777773;
+  --control-line: #e4e4df;
+  --control-soft: #f4f4f0;
+  --control-surface: rgba(255, 255, 255, 0.94);
+  --control-accent: var(--global-controls-accent, #635bff);
+  position: fixed;
+  z-index: 1600;
+  color: var(--control-ink);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+}
+
+.placementMedia {
+  top: 26px;
+  right: 24px;
+}
+
+.placementCanvas {
+  top: 18px;
+  right: 18px;
+}
+
+.controlBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  background: var(--control-surface);
+  border: 1px solid var(--control-line);
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgba(20, 20, 15, 0.07), 0 1px 2px rgba(20, 20, 15, 0.05);
+  backdrop-filter: blur(16px);
+}
+
+.controlButton,
+.closeButton,
+.notificationItem {
+  font: inherit;
+}
+
+.controlButton {
+  position: relative;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  place-items: center;
+  color: #64645f;
+  background: transparent;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.controlButton:hover,
+.controlButton[aria-expanded="true"] {
+  color: var(--control-ink);
+  background: var(--control-soft);
+}
+
+.controlButton:active {
+  transform: scale(0.96);
+}
+
+.controlButton:focus-visible,
+.closeButton:focus-visible,
+.notificationItem:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--control-accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.activityGlyph {
+  position: relative;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1.7px solid currentColor;
+  border-radius: 50%;
+}
+
+.activityGlyph::before,
+.activityGlyph::after,
+.activityGlyph span {
+  position: absolute;
+  display: block;
+  content: "";
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.activityGlyph::before {
+  top: 4px;
+  left: 5px;
+  width: 3px;
+  height: 3px;
+}
+
+.activityGlyph::after {
+  right: 4px;
+  bottom: 5px;
+  width: 3px;
+  height: 3px;
+}
+
+.activityGlyph span {
+  top: 8px;
+  right: 5px;
+  width: 2px;
+  height: 2px;
+  opacity: 0.58;
+}
+
+.activityButtonActive {
+  color: var(--control-accent);
+}
+
+.activityButtonActive .activityGlyph {
+  border-top-color: transparent;
+  animation: activity-spin 1.5s linear infinite;
+}
+
+.activityButtonActive::before {
+  position: absolute;
+  inset: 7px;
+  content: "";
+  border: 1px solid color-mix(in srgb, var(--control-accent) 35%, transparent);
+  border-radius: 50%;
+  animation: activity-pulse 1.8s ease-out infinite;
+}
+
+.countBadge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  display: grid;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  place-items: center;
+  color: #fff;
+  background: var(--control-accent);
+  border: 2px solid #fff;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bellGlyph {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 19px;
+}
+
+.bellGlyph::before {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 12px;
+  height: 13px;
+  content: "";
+  border: 1.7px solid currentColor;
+  border-radius: 8px 8px 5px 5px;
+  clip-path: polygon(0 0, 100% 0, 100% 84%, 0 84%);
+}
+
+.bellGlyph::after {
+  position: absolute;
+  bottom: 0;
+  left: 7px;
+  width: 5px;
+  height: 3px;
+  content: "";
+  border: 1.7px solid currentColor;
+  border-top: 0;
+  border-radius: 0 0 5px 5px;
+}
+
+.notificationButtonUnread {
+  color: var(--control-accent);
+  background: color-mix(in srgb, var(--control-accent) 8%, transparent);
+}
+
+.unreadDot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  background: var(--control-accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.panel {
+  position: fixed;
+  top: 82px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1601;
+  display: flex;
+  width: min(410px, calc(100vw - 24px));
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--control-ink);
+  background: rgba(251, 251, 249, 0.98);
+  border: 1px solid #ddddda;
+  border-radius: 22px;
+  box-shadow: 0 28px 80px rgba(20, 20, 15, 0.18), 0 3px 12px rgba(20, 20, 15, 0.08);
+  backdrop-filter: blur(22px);
+  animation: panel-in 180ms ease-out;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 25px 24px 20px;
+  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid var(--control-line);
+}
+
+.panelHeader h2 {
+  margin: 3px 0 3px;
+  color: var(--control-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  outline: none;
+}
+
+.panelHeader p {
+  margin: 0;
+  color: var(--control-muted);
+  font-size: 12px;
+}
+
+.panelHeader .eyebrow {
+  color: #90908a;
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.closeButton {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0 0 2px;
+  place-items: center;
+  color: #6f6f69;
+  background: var(--control-soft);
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  color: var(--control-ink);
+  background: #ecece7;
+}
+
+.closeButton span {
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.panelBody {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  scrollbar-color: #c9c9c3 transparent;
+  scrollbar-width: thin;
+}
+
+.activityList,
+.notificationList {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.activityItem {
+  padding: 17px;
+  background: #fff;
+  border: 1px solid var(--control-line);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(20, 20, 15, 0.035);
+}
+
+.itemTopline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.jobStateMark {
+  width: 7px;
+  height: 7px;
+  background: var(--control-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--control-accent) 10%, transparent);
+  animation: job-pulse 1.7s ease-in-out infinite;
+}
+
+.activityReady .jobStateMark {
+  background: #8c8c86;
+  box-shadow: none;
+  animation: none;
+}
+
+.stageLabel {
+  color: var(--control-accent);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.activityReady .stageLabel {
+  color: #74746f;
+}
+
+.activityItem h3 {
+  margin: 0;
+  color: var(--control-ink);
+  font-size: 14px;
+  font-weight: 680;
+  letter-spacing: -0.012em;
+}
+
+.speaker {
+  margin: 3px 0 15px;
+  color: var(--control-muted);
+  font-size: 12px;
+}
+
+.progressState {
+  display: grid;
+  gap: 7px;
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  color: #777772;
+  font-size: 10px;
+}
+
+.progressTrack {
+  position: relative;
+  height: 4px;
+  overflow: hidden;
+  background: #ecece7;
+  border-radius: 999px;
+}
+
+.progressTrack > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  max-width: 100%;
+  background: var(--control-accent);
+  border-radius: inherit;
+  transition: width 220ms ease;
+}
+
+.activityReady .progressTrack > span {
+  background: #8c8c86;
+}
+
+.progressIndeterminate > span {
+  width: 42%;
+  background: linear-gradient(90deg, transparent, var(--control-accent), transparent);
+  animation: progress-slide 1.25s ease-in-out infinite;
+}
+
+.notificationItem {
+  position: relative;
+  display: grid;
+  width: 100%;
+  gap: 6px;
+  padding: 16px 16px 15px;
+  color: var(--control-ink);
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--control-line);
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 20, 15, 0.035);
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.notificationItem:hover {
+  border-color: #cdcdc6;
+  box-shadow: 0 8px 24px rgba(20, 20, 15, 0.07);
+  transform: translateY(-1px);
+}
+
+.notificationUnread::before {
+  position: absolute;
+  top: 18px;
+  left: -4px;
+  width: 7px;
+  height: 7px;
+  content: "";
+  background: var(--control-accent);
+  border: 2px solid #fbfbf9;
+  border-radius: 50%;
+}
+
+.notificationStatusRow,
+.notificationMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notificationStatusRow time {
+  color: #90908b;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.notificationStatus {
+  color: var(--control-accent);
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notificationItem strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 690;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notificationMeta {
+  color: var(--control-muted);
+  font-size: 11px;
+}
+
+.openMark {
+  color: #91918c;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 12px;
+}
+
+.notificationRead {
+  color: #686863;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
+.notificationRead .notificationStatus {
+  color: #858580;
+}
+
+.notificationRead strong {
+  font-weight: 590;
+}
+
+.emptyState {
+  display: grid;
+  min-height: 320px;
+  padding: 54px 26px;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.emptyState h3 {
+  margin: 18px 0 5px;
+  color: var(--control-ink);
+  font-size: 15px;
+  font-weight: 680;
+}
+
+.emptyState p {
+  max-width: 245px;
+  margin: 0;
+  color: var(--control-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.emptyActivityMark,
+.emptyBellMark {
+  position: relative;
+  display: block;
+  width: 43px;
+  height: 43px;
+  color: #a2a29d;
+  background: #f0f0ec;
+  border: 1px solid #e1e1dc;
+  border-radius: 14px;
+}
+
+.emptyActivityMark::before {
+  position: absolute;
+  inset: 10px;
+  content: "";
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.emptyActivityMark::after {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 6px;
+  height: 6px;
+  content: "";
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.emptyBellMark::before {
+  position: absolute;
+  top: 11px;
+  left: 13px;
+  width: 16px;
+  height: 16px;
+  content: "";
+  border: 1.5px solid currentColor;
+  border-radius: 10px 10px 5px 5px;
+}
+
+.emptyBellMark::after {
+  position: absolute;
+  bottom: 10px;
+  left: 19px;
+  width: 5px;
+  height: 3px;
+  content: "";
+  background: currentColor;
+  border-radius: 0 0 5px 5px;
+}
+
+@keyframes activity-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes activity-pulse {
+  0% { opacity: 0.65; transform: scale(0.82); }
+  72%, 100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes job-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.82); }
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-105%); }
+  100% { transform: translateX(340%); }
+}
+
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(14px) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@media (max-width: 620px) {
+  .placementMedia {
+    top: 10px;
+    right: 10px;
+  }
+
+  .placementCanvas {
+    top: 6px;
+    right: 58px;
+  }
+
+  .controlBar {
+    gap: 3px;
+    padding: 3px;
+    border-radius: 14px;
+  }
+
+  .controlButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .panel {
+    top: 58px;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -14px 55px rgba(20, 20, 15, 0.14);
+  }
+
+  .panelHeader {
+    padding: 21px 19px 17px;
+  }
+
+  .panelBody {
+    padding: 11px;
+  }
+
+  .notificationItem:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

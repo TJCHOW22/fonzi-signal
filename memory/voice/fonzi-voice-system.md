@@ -1,15 +1,13 @@
 ---
 name: fonzi-voice-system
-description: Voice context and speaker-routing rules for Fonzi content.
+description: Speaker and spoken-language rules for Fonzi content.
 type: context
-use_when: Writing, editing, or evaluating any public-facing Fonzi content.
-owns: Speaker selection, verbal register, wording constraints, and voice QA.
+use_when: Writing or reviewing public-facing content.
+owns: Speaker selection, verbal register, wording, and voice QA.
 sources:
-  - Knowledge/Fonzi - Brand.md
-  - Delphis/Fonzi.md
-  - Approved founder take banks
+  - App-local voice and speaker rules in this file
+  - Approved speaker take attached to the draft, when available
 related:
-  - ../identity/fonzi-positioning.md
   - ../audience/fonzi-icp.md
   - ../proof/fonzi-proof-rules.md
 ---
@@ -18,100 +16,39 @@ related:
 
 ## Instructions to the system
 
-Load this file only after the audience, message, and facts are established.
-
-Return:
-
-1. Selected speaker
-2. Approved take or “no take on file”
-3. Required register
-4. Words or patterns to avoid
-5. Voice risks in the current draft
-
-Voice may sharpen a true idea. It may not hide a weak idea or unsupported claim.
+Apply voice only after the story is true and understandable.
 
 ## Purpose
 
-Use this context to choose the correct speaker and keep the brand calm, specific, useful, and credible.
+Make a clear explanation sound natural for its speaker.
 
-## Voice law
+Truth first, then comprehension, then voice.
 
-Truth first. Then voice. Then platform.
+## Default register
 
-Fonzi's register is the elegant researcher who is based:
+Calm, direct, specific, evidence-led, and useful before clever. Use ordinary sentence structure, contractions, and spoken transitions such as “and,” “so,” and “but.” Avoid corporate language, generic hype, recruiter language, manufactured urgency, news-anchor prose, and em dashes.
 
-- calm
-- direct
-- specific
-- evidence-led
-- internet aware
-- confident without performing confidence
-- useful before clever
+## Brett
 
-## Fonzi says
+Brett speaks like an operator and investor explaining company strategy, markets, and hiring to a smart friend. He can use an expert term only after explaining the idea in plain language. Do not invent a personal opinion. If no approved take is attached, write a source-grounded explainer without pretending it is Brett's belief.
 
-- one clear idea
-- plain opening sentences
-- numbers with context
-- calm interpretations
-- specific companies, roles, dates, and mechanisms
-- product-driven language
-- short native CTAs when appropriate
+## One-listen test
 
-## Fonzi never says
+Reject the draft when:
 
-- corporate announcement language
-- generic hype
-- manufactured urgency
-- recruiter spam
-- empty industry commentary
-- combative “war on recruiting” language
-- invented taglines
-- claims the evidence cannot support
+- a sentence contains more than one new idea
+- a technical term is not immediately explained
+- abstract nouns replace a concrete action or contrast
+- dates, names, or numbers interrupt the causal chain
+- the viewer cannot restate the problem, mechanism, and payoff
+- the CTA feels bolted on
 
-## Speaker separation
-
-Do not blend voices.
-
-| Speaker | Primary territory | Default register |
-|---|---|---|
-| Fonzi | Market intelligence, product proof, community, outcomes | Calm researcher |
-| Seb | Engineers, candidates, distribution, product mechanics | Direct peer, internet native |
-| Brett | Companies, founders, venture, market structure | Operator and investor perspective |
-| Thomas | Creative systems, AI media, production, design | Builder and creative technologist |
-
-If the speaker is not named, write in the Fonzi brand voice.
-
-Do not invent a founder take. Retrieve an approved take or state that no take is available.
-
-## Voice prompt
-
-> Write for [speaker] about [one idea] for [one ICP]. Use only approved facts and takes. Open plainly. Prefer specifics to adjectives. Keep the rhythm smooth and unhurried. Remove corporate language, recruiter language, generic hype, and any line that could belong to another AI company. If the selected speaker has no approved take, ask for one.
-
-## Evaluation prompt
-
-> Highlight every sentence that is vague, inflated, unsupported, off-speaker, or too generic. Explain the failure briefly, then rewrite it as a calm, specific sentence without adding new facts.
+Voice may make a clear, true idea sound native. It may not hide a confusing idea.
 
 ## Quality check
 
-- Is the speaker unmistakable?
-- Is the piece useful before it is clever?
-- Does every strong claim have support?
-- Could this line belong to any startup?
-- Does the CTA feel native and low friction?
-
-## Source context
-
-The detailed voice canon lives in the Fonzi Brand source and approved speaker take banks. This file is the creation-time context.
+The script passes every one-listen test and sounds spoken, calm, and specific.
 
 ## Retrieval and conflict rules
 
-- This file owns expression, not positioning or evidence.
-- Use ../identity/fonzi-positioning.md for the product story.
-- Use ../audience/fonzi-icp.md for the reader and their problem.
-- Use ../proof/fonzi-proof-rules.md for claims.
-- Use Knowledge/Fonzi - Brand.md for the full brand law.
-- Use Delphis/Fonzi.md for learned brand behavior and approved observations.
-- Use the named founder's take bank for personal opinions.
-- Never blend speakers to fill a missing take.
-- Newer approved speaker feedback outranks old examples.
+This file owns expression. Proof owns facts, creative owns story selection, and attached approved takes own personal opinion.

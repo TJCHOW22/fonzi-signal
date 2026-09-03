@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // native module — must stay external to the server bundle
-  serverExternalPackages: ["better-sqlite3"],
+  allowedDevOrigins: ["127.0.0.1"],
+  // Native/local-runtime packages must stay external to the server bundle.
+  serverExternalPackages: [
+    "@openai/codex",
+    "better-sqlite3",
+  ],
   outputFileTracingIncludes: {
     "/*": ["./seed/signal.db"],
   },
